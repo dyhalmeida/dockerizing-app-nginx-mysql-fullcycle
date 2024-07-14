@@ -1,0 +1,53 @@
+services:
+
+  nginx:
+    build: ./.docker/nginx
+    image: dyhalmeida/node-nginx-fullcycle:latest
+    container_name: container_nginx_fullcycle
+    ports:
+      - '8080:80'
+    restart: always
+    networks:
+      - globonet
+    depends_on:
+      - app
+
+  app:
+    build: .
+    image: dyhalmeida/node-app-fullcycle:latest
+    container_name: container_app_fullcycle
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: mydb
+      APP_PORT: 3333
+    restart: always
+    networks:
+      - globonet
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    platform: linux/x86_64
+    image: mysql:8.0.30-debian
+    container_name: container_db_fullcycle
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb
+    volumes:
+      - ./.docker/mysql/var/lib/mysql:/var/lib/mysql
+      - ./.docker/mysql/initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 10s
+      retries: 3
+    networks:
+      - globonet
+
+networks:
+  globonet:
+    driver: bridge

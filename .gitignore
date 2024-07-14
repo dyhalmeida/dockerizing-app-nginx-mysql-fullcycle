@@ -1,0 +1,4 @@
+dist
+.env
+.docker/mysql/var
+node_modules
